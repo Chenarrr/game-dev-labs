@@ -135,7 +135,7 @@ public static class SceneSetup
 
         // Wire panel into GameManager
         GameManager gm = gmGO.GetComponent<GameManager>();
-        gm.SetGameOverPanel(panel);
+        gm.SetUIReferences(panel, null, null);
 
         // ── Save scene ──────────────────────────────────────────────────────
         UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
@@ -146,6 +146,216 @@ public static class SceneSetup
         EditorUtility.DisplayDialog("Scene Built!",
             "Platformer scene is ready.\n\n• Arrow keys / A&D — move\n• Space / W / Up — jump\n• R — restart after death\n\nHit Play!",
             "Let's go!");
+    }
+
+    // ── Basic 2D Scene ──────────────────────────────────────────────────────
+
+    [MenuItem("Lab2/Setup Basic 2D Scene")]
+    public static void SetupBasicScene()
+    {
+        EnsureTag("Ground");
+
+        // Remove any existing ground object
+        GameObject existing = GameObject.Find("Ground");
+        if (existing != null) Object.DestroyImmediate(existing);
+
+        // ── Camera: light blue sky background ───────────────────────────────
+        Camera cam = Camera.main;
+        if (cam != null)
+        {
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.53f, 0.81f, 0.98f); // light blue
+            cam.orthographic = true;
+            cam.orthographicSize = 5f;
+            cam.transform.position = new Vector3(0f, 0f, -10f);
+        }
+
+        // ── Ground: green platform at the bottom ─────────────────────────────
+        // Camera size 5 → bottom edge at y = -5. Place ground so top sits at y = -3.5.
+        // Ground center y = -4f, scale y = 1 → top at -3.5
+        GameObject ground = new GameObject("Ground");
+        ground.tag = "Ground";
+        ground.transform.position = new Vector3(0f, -4f, 0f);
+        ground.transform.localScale = new Vector3(20f, 1f, 1f);
+
+        SpriteRenderer sr = ground.AddComponent<SpriteRenderer>();
+        sr.sprite = CreateSquareSprite();
+        sr.color = new Color(0.18f, 0.65f, 0.18f); // green
+
+        ground.AddComponent<BoxCollider2D>();
+
+        // ── Save ─────────────────────────────────────────────────────────────
+        UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
+            UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
+        UnityEditor.SceneManagement.EditorSceneManager.SaveOpenScenes();
+
+        Debug.Log("Basic 2D scene ready: green ground (tagged 'Ground'), light blue background.");
+        EditorUtility.DisplayDialog("Done!", "Green ground added, background set to light blue, tag set to 'Ground'.", "OK");
+    }
+
+    // ── Add Player ──────────────────────────────────────────────────────────
+
+    [MenuItem("Lab2/Add Player")]
+    public static void AddPlayer()
+    {
+        EnsureTag("Player");
+
+        // Remove existing player if present
+        GameObject existing = GameObject.Find("Player");
+        if (existing != null) Object.DestroyImmediate(existing);
+
+        // Ground top = -3.5 (center -4, scaleY 1). Player scaleY 0.8, half = 0.4 → center at -3.1
+        GameObject player = new GameObject("Player");
+        player.tag = "Player";
+        player.transform.position = new Vector3(0f, -3.1f, 0f);
+        player.transform.localScale = new Vector3(0.8f, 0.8f, 1f);
+
+        SpriteRenderer sr = player.AddComponent<SpriteRenderer>();
+        sr.sprite = CreateSquareSprite();
+        sr.color = Color.red;
+        sr.sortingOrder = 1;
+
+        player.AddComponent<BoxCollider2D>();
+
+        Rigidbody2D rb = player.AddComponent<Rigidbody2D>();
+        rb.gravityScale = 1.5f;
+        rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+        rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+
+        player.AddComponent<PlayerController>();
+
+        UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
+            UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
+        UnityEditor.SceneManagement.EditorSceneManager.SaveOpenScenes();
+
+        Debug.Log("Player added: red square, Rigidbody2D (freeze Z), BoxCollider2D, PlayerController. A/D to move, Space to jump.");
+        EditorUtility.DisplayDialog("Player Added!",
+            "Red square player placed on the ground.\n\n• A / D — move\n• Space — jump (grounded only)\n\nHit Play!",
+            "OK");
+    }
+
+    // ── Add Obstacle Spawner ─────────────────────────────────────────────────
+
+    [MenuItem("Lab2/Add Obstacle Spawner")]
+    public static void AddObstacleSpawner()
+    {
+        EnsureTag("Obstacle");
+
+        GameObject existing = GameObject.Find("ObstacleSpawner");
+        if (existing != null) Object.DestroyImmediate(existing);
+
+        GameObject spawnerGO = new GameObject("ObstacleSpawner");
+        spawnerGO.AddComponent<ObstacleSpawner>();
+
+        UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
+            UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
+        UnityEditor.SceneManagement.EditorSceneManager.SaveOpenScenes();
+
+        Debug.Log("Obstacle spawner added: dark grey squares, speed 4, every 2 seconds from the right.");
+        EditorUtility.DisplayDialog("Spawner Added!",
+            "Obstacle spawner is in the scene.\n\nDark grey squares spawn every 2s from the right and move left at speed 4.",
+            "OK");
+    }
+
+    // ── Setup Death & Score UI ───────────────────────────────────────────────
+
+    [MenuItem("Lab2/Setup Death and Score UI")]
+    public static void SetupDeathAndScoreUI()
+    {
+        // Ensure GameManager exists
+        GameManager gm = Object.FindFirstObjectByType<GameManager>();
+        if (gm == null)
+        {
+            GameObject gmGO = new GameObject("GameManager");
+            gm = gmGO.AddComponent<GameManager>();
+        }
+
+        // Remove old canvas if present
+        GameObject oldCanvas = GameObject.Find("GameUI");
+        if (oldCanvas != null) Object.DestroyImmediate(oldCanvas);
+
+        // ── Canvas ───────────────────────────────────────────────────────────
+        GameObject canvasGO = new GameObject("GameUI");
+        Canvas canvas = canvasGO.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 10;
+        CanvasScaler scaler = canvasGO.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+        canvasGO.AddComponent<GraphicRaycaster>();
+
+        // ── Score text — top left ────────────────────────────────────────────
+        GameObject scoreTxtGO = new GameObject("ScoreText");
+        scoreTxtGO.transform.SetParent(canvasGO.transform, false);
+        TextMeshProUGUI scoreTMP = scoreTxtGO.AddComponent<TextMeshProUGUI>();
+        scoreTMP.text = "Score: 0";
+        scoreTMP.fontSize = 36;
+        scoreTMP.color = Color.white;
+        scoreTMP.fontStyle = FontStyles.Bold;
+        RectTransform scoreRect = scoreTxtGO.GetComponent<RectTransform>();
+        scoreRect.anchorMin = new Vector2(0f, 1f);
+        scoreRect.anchorMax = new Vector2(0f, 1f);
+        scoreRect.pivot = new Vector2(0f, 1f);
+        scoreRect.anchoredPosition = new Vector2(20f, -20f);
+        scoreRect.sizeDelta = new Vector2(300f, 60f);
+
+        // ── Game Over panel — hidden until death ─────────────────────────────
+        GameObject panel = new GameObject("GameOverPanel");
+        panel.transform.SetParent(canvasGO.transform, false);
+        Image panelImg = panel.AddComponent<Image>();
+        panelImg.color = new Color(0f, 0f, 0f, 0.7f);
+        RectTransform panelRect = panel.GetComponent<RectTransform>();
+        panelRect.anchorMin = Vector2.zero;
+        panelRect.anchorMax = Vector2.one;
+        panelRect.offsetMin = Vector2.zero;
+        panelRect.offsetMax = Vector2.zero;
+
+        // "GAME OVER" title
+        TextMeshProUGUI titleTMP = CreateCenteredText(panel, "GameOverTitle",
+            "GAME OVER", 80, Color.white, FontStyles.Bold, new Vector2(0.5f, 0.6f), new Vector2(700f, 110f));
+
+        // Final score (populated at runtime)
+        TextMeshProUGUI finalTMP = CreateCenteredText(panel, "FinalScoreText",
+            "Score: 0", 48, new Color(1f, 0.9f, 0.3f), FontStyles.Normal, new Vector2(0.5f, 0.47f), new Vector2(500f, 70f));
+
+        // Restart hint
+        CreateCenteredText(panel, "RestartHint",
+            "Press R to Restart", 32, new Color(0.75f, 0.75f, 0.75f), FontStyles.Normal, new Vector2(0.5f, 0.37f), new Vector2(500f, 50f));
+
+        panel.SetActive(false);
+
+        // ── Wire into GameManager ────────────────────────────────────────────
+        gm.SetUIReferences(panel, scoreTMP, finalTMP);
+
+        UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
+            UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
+        UnityEditor.SceneManagement.EditorSceneManager.SaveOpenScenes();
+
+        Debug.Log("Death & Score UI ready. Score counts up every second. Game Over on obstacle hit. R to restart.");
+        EditorUtility.DisplayDialog("UI Ready!",
+            "Death & Score UI added.\n\n• Score counts up every second (top left)\n• Obstacle hit → GAME OVER screen + final score\n• R — restart",
+            "OK");
+    }
+
+    static TextMeshProUGUI CreateCenteredText(GameObject parent, string name, string text,
+        float fontSize, Color color, FontStyles style, Vector2 anchorY, Vector2 size)
+    {
+        GameObject go = new GameObject(name);
+        go.transform.SetParent(parent.transform, false);
+        TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
+        tmp.text = text;
+        tmp.fontSize = fontSize;
+        tmp.color = color;
+        tmp.fontStyle = style;
+        tmp.alignment = TextAlignmentOptions.Center;
+        RectTransform rt = go.GetComponent<RectTransform>();
+        rt.anchorMin = anchorY;
+        rt.anchorMax = anchorY;
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = Vector2.zero;
+        rt.sizeDelta = size;
+        return tmp;
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────

@@ -2,16 +2,15 @@ using UnityEngine;
 
 public class ObstacleSpawner : MonoBehaviour
 {
-    [SerializeField] private float minInterval = 2f;
-    [SerializeField] private float maxInterval = 3f;
+    [SerializeField] private float spawnInterval = 2f;
     [SerializeField] private float spawnX = 10f;
-    [SerializeField] private float spawnY = -4.1f;
-    [SerializeField] private float obstacleSpeed = 3f;
-    [SerializeField] private float obstacleSize = 0.8f;
+    [SerializeField] private float spawnY = -3.1f;
+    [SerializeField] private float obstacleSpeed = 4f;
+    [SerializeField] private float obstacleSize = 0.6f;
 
     private float timer;
 
-    void Start() => ScheduleNext();
+    void Start() => timer = spawnInterval;
 
     void Update()
     {
@@ -21,11 +20,9 @@ public class ObstacleSpawner : MonoBehaviour
         if (timer <= 0f)
         {
             SpawnObstacle();
-            ScheduleNext();
+            timer = spawnInterval;
         }
     }
-
-    void ScheduleNext() => timer = Random.Range(minInterval, maxInterval);
 
     void SpawnObstacle()
     {
@@ -36,7 +33,7 @@ public class ObstacleSpawner : MonoBehaviour
 
         SpriteRenderer sr = obs.AddComponent<SpriteRenderer>();
         sr.sprite = CreateSquareSprite();
-        sr.color = Color.red;
+        sr.color = new Color(0.25f, 0.25f, 0.25f); // dark grey
         sr.sortingOrder = 1;
 
         BoxCollider2D col = obs.AddComponent<BoxCollider2D>();
