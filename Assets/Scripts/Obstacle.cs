@@ -1,0 +1,16 @@
+using UnityEngine;
+
+public class Obstacle : MonoBehaviour
+{
+    [SerializeField] private float speed = 3f;
+    private const float DestroyX = -12f;
+
+    public void SetSpeed(float s) => speed = s;
+
+    void Update()
+    {
+        transform.Translate(Vector2.left * speed * Time.deltaTime);
+        if (transform.position.x < DestroyX)
+            Destroy(gameObject);
+    }
+}
