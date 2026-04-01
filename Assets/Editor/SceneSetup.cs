@@ -8,6 +8,13 @@ public static class SceneSetup
     [MenuItem("Lab2/Fix Scene")]
     public static void FixScene()
     {
+        if (EditorApplication.isPlaying)
+        {
+            EditorUtility.DisplayDialog("Stop Play Mode First",
+                "Press the Play button to stop the game, then run Lab2 → Fix Scene again.", "OK");
+            return;
+        }
+
         // ── Tags ─────────────────────────────────────────────────────────────
         EnsureTag("Ground");
         EnsureTag("Obstacle");
