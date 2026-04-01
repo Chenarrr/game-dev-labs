@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 using TMPro;
 
 public class GameManager : MonoBehaviour
@@ -25,7 +26,8 @@ public class GameManager : MonoBehaviour
     {
         if (isGameOver)
         {
-            if (Input.GetKeyDown(KeyCode.R))
+            var kb = Keyboard.current;
+            if (kb != null && kb.rKey.wasPressedThisFrame)
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             return;
         }
@@ -45,7 +47,6 @@ public class GameManager : MonoBehaviour
         if (isGameOver) return;
         isGameOver = true;
 
-        // Stop and clear all active obstacles
         foreach (GameObject obs in GameObject.FindGameObjectsWithTag("Obstacle"))
             Destroy(obs);
 
@@ -56,11 +57,10 @@ public class GameManager : MonoBehaviour
             gameOverPanel.SetActive(true);
     }
 
-    // Called by editor setup script to wire UI references
     public void SetUIReferences(GameObject panel, TextMeshProUGUI scoreTMP, TextMeshProUGUI finalTMP)
     {
-        gameOverPanel = panel;
-        scoreText = scoreTMP;
+        gameOverPanel  = panel;
+        scoreText      = scoreTMP;
         finalScoreText = finalTMP;
     }
 }

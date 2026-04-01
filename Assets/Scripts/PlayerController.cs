@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
@@ -19,14 +20,15 @@ public class PlayerController : MonoBehaviour
     {
         if (isDead || (GameManager.Instance != null && GameManager.Instance.isGameOver)) return;
 
-        float moveInput = Input.GetAxisRaw("Horizontal");
+        var kb = Keyboard.current;
+        if (kb == null) return;
+
+        float moveInput = 0f;
+        if (kb.aKey.isPressed) moveInput = -1f;
+        if (kb.dKey.isPressed) moveInput =  1f;
         rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
 
-        bool jumpPressed = Input.GetKeyDown(KeyCode.Space)
-                        || Input.GetKeyDown(KeyCode.W)
-                        || Input.GetKeyDown(KeyCode.UpArrow);
-
-        if (jumpPressed && IsGrounded)
+        if (kb.enterKey.wasPressedThisFrame && IsGrounded)
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
     }
 
