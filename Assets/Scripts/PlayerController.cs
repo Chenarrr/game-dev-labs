@@ -24,7 +24,8 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (isDead || (GameManager.Instance != null && GameManager.Instance.isGameOver)) return;
+        if (isDead) return;
+        if (GameManager.Instance == null || !GameManager.Instance.IsPlaying) return;
 
         var kb = Keyboard.current;
         if (kb == null) return;
@@ -44,7 +45,7 @@ public class PlayerController : MonoBehaviour
         if (IsGrounded) coyoteCounter = coyoteTime;
         else            coyoteCounter -= Time.deltaTime;
 
-        // ── Jump: Space or Up arrow ONLY (W is move-only, avoid conflict) ────
+        // ── Jump: Space or Up arrow ONLY ─────────────────────────────────────
         bool jumpPressed   = kb.spaceKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame;
         bool jumpReleased  = kb.spaceKey.wasReleasedThisFrame || kb.upArrowKey.wasReleasedThisFrame;
 
@@ -65,12 +66,14 @@ public class PlayerController : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D col)
     {
-        if (col.gameObject.CompareTag("Ground")) groundContacts++;
+        if (col.gameObject.CompareTag("Ground"))
+            groundContacts++;
     }
 
     void OnCollisionExit2D(Collision2D col)
     {
-        if (col.gameObject.CompareTag("Ground")) groundContacts--;
+        if (col.gameObject.CompareTag("Ground"))
+            groundContacts = Mathf.Max(0, groundContacts - 1);
     }
 
     void OnTriggerEnter2D(Collider2D other)
