@@ -54,7 +54,7 @@ public static class SceneSetup
         pc.size = Vector2.one;
 
         Rigidbody2D rb = player.AddComponent<Rigidbody2D>();
-        rb.gravityScale           = 2f;
+        rb.gravityScale           = 3f;  // base gravity; script adds extra on fall
         rb.constraints            = RigidbodyConstraints2D.FreezeRotation;
         rb.interpolation          = RigidbodyInterpolation2D.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
@@ -125,7 +125,7 @@ public static class SceneSetup
             "• Dark grey obstacles every 2s from the right\n" +
             "• Score counter (top left)\n" +
             "• Game Over screen + R to restart\n\n" +
-            "Controls:  A/D move    Enter jump",
+            "Controls:  A/D / ←→ move    Space/W/↑ jump    R/Enter restart",
             "Let's go!");
     }
 

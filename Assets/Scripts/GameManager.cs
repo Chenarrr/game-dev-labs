@@ -27,7 +27,7 @@ public class GameManager : MonoBehaviour
         if (isGameOver)
         {
             var kb = Keyboard.current;
-            if (kb != null && kb.rKey.wasPressedThisFrame)
+            if (kb != null && (kb.rKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame))
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             return;
         }
