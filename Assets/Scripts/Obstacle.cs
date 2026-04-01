@@ -3,7 +3,7 @@ using UnityEngine;
 public class Obstacle : MonoBehaviour
 {
     [SerializeField] private float speed = 3f;
-    private const float DestroyX = -12f;
+    private const float DestroyX = -9f;
 
     public void SetSpeed(float s) => speed = s;
 
