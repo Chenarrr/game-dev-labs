@@ -10,7 +10,14 @@ public class Obstacle : MonoBehaviour
     void Update()
     {
         transform.Translate(Vector2.left * speed * Time.deltaTime);
+
         if (transform.position.x < DestroyX)
+        {
+            // Player successfully dodged this obstacle — award a point
+            if (GameManager.Instance != null && !GameManager.Instance.isGameOver)
+                GameManager.Instance.AddScore();
+
             Destroy(gameObject);
+        }
     }
 }

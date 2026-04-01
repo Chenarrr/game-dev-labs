@@ -9,12 +9,11 @@ public class GameManager : MonoBehaviour
 
     [HideInInspector] public bool isGameOver = false;
 
-    [SerializeField] private GameObject gameOverPanel;
+    [SerializeField] private GameObject      gameOverPanel;
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private TextMeshProUGUI finalScoreText;
 
     private int score = 0;
-    private float scoreTimer = 0f;
 
     void Awake()
     {
@@ -24,22 +23,19 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        if (isGameOver)
-        {
-            var kb = Keyboard.current;
-            if (kb != null && (kb.rKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame))
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-            return;
-        }
+        if (!isGameOver) return;
 
-        scoreTimer += Time.deltaTime;
-        if (scoreTimer >= 1f)
-        {
-            score++;
-            scoreTimer -= 1f;
-            if (scoreText != null)
-                scoreText.text = "Score: " + score;
-        }
+        var kb = Keyboard.current;
+        if (kb != null && (kb.rKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame))
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    // Called by Obstacle when it exits the screen (player dodged it)
+    public void AddScore()
+    {
+        score++;
+        if (scoreText != null)
+            scoreText.text = "Score: " + score;
     }
 
     public void GameOver()
