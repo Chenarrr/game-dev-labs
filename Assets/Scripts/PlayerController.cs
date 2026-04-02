@@ -44,12 +44,21 @@ public class PlayerController : MonoBehaviour
         baseScale   = transform.localScale;
         targetScale = baseScale;
 
-        // Load sprite at runtime
+        // Load sprite at runtime as fallback
         var sr = GetComponent<SpriteRenderer>();
         if (sr != null)
         {
-            var sprite = Resources.Load<Sprite>("ball_idle");
-            if (sprite != null) { sr.sprite = sprite; sr.color = Color.white; }
+            sr.color = Color.white;
+            sr.sortingOrder = 10;  // Always on top
+
+            var tex = Resources.Load<Texture2D>("ball_idle");
+            if (tex != null)
+            {
+                sr.sprite = Sprite.Create(tex,
+                    new Rect(0, 0, tex.width, tex.height),
+                    new Vector2(0.5f, 0.5f),
+                    tex.width);
+            }
         }
 
         // Create dust particle system

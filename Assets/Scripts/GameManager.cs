@@ -64,10 +64,21 @@ public class GameManager : MonoBehaviour
 
         // Disable the limited green background sprite
         var bgObj = GameObject.Find("ground");
-        if (bgObj != null)
+        if (bgObj != null) bgObj.SetActive(false);
+
+        // Also try "Ground" name variant
+        var bgObj2 = GameObject.Find("Ground");
+        if (bgObj2 != null && bgObj2.GetComponent<SpriteRenderer>() != null
+            && bgObj2.GetComponent<BoxCollider2D>() == null)
+            bgObj2.SetActive(false);
+
+        // Kill any leftover score text UI from old scene setup
+        foreach (var tmp in FindObjectsByType<TMPro.TextMeshProUGUI>(FindObjectsSortMode.None))
         {
-            var bgSr = bgObj.GetComponent<SpriteRenderer>();
-            if (bgSr != null) bgSr.enabled = false;
+            if (tmp.text.StartsWith("Score"))
+            {
+                tmp.gameObject.SetActive(false);
+            }
         }
 
         // Fix starting Ground: shrink to 8 units wide, set brown
