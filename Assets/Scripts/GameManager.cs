@@ -70,12 +70,15 @@ public class GameManager : MonoBehaviour
         var obs = FindFirstObjectByType<ObstacleSpawner>();
         if (obs != null) obs.enabled = false;
 
-        // Fix Ground color at runtime
+        // Fix Ground: shrink it to a short starting platform and set color
         var ground = GameObject.FindGameObjectWithTag("Ground");
         if (ground != null)
         {
             var sr = ground.GetComponent<SpriteRenderer>();
             if (sr != null) { sr.color = new Color(0.45f, 0.27f, 0.13f); sr.sortingOrder = 2; }
+            // Shrink from 22 units wide down to 8 so gaps appear quickly
+            ground.transform.localScale = new Vector3(8f, ground.transform.localScale.y, 1f);
+            ground.transform.position   = new Vector3(0f, ground.transform.position.y, 0f);
         }
 
         // Link camera to player

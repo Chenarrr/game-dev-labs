@@ -23,9 +23,8 @@ public class WorldGenerator : MonoBehaviour
 
     void Start()
     {
-        // Existing static ground spans roughly x=-11 to x=+11
-        // Start generating just past that
-        generatedUpTo = 11f;
+        // Existing static ground is now 8 units wide centred at 0 → right edge = +4
+        generatedUpTo = 4f;
     }
 
     void Update()
@@ -44,7 +43,7 @@ public class WorldGenerator : MonoBehaviour
     void GenerateChunk()
     {
         chunkIndex++;
-        bool isFirst = chunkIndex <= 2;  // first two chunks: no gaps, no enemies
+        bool isFirst = chunkIndex <= 1;  // only very first chunk: no gap, no enemies
 
         // ── Ground segment ───────────────────────────────────────────────────
         float minW = Mathf.Max(2.5f, 5f - Difficulty * 2.5f);
