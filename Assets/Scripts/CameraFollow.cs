@@ -31,14 +31,21 @@ public class CameraFollow : MonoBehaviour
     void LateUpdate()
     {
         if (target == null) return;
-        if (GameManager.Instance == null || !GameManager.Instance.IsPlaying) return;
 
         float desiredX = target.position.x;
 
-        // Classic Mario rule: camera only scrolls RIGHT, never back left
-        if (desiredX > minX) minX = desiredX;
-
-        float newX = Mathf.Lerp(transform.position.x, minX, smoothSpeed * Time.deltaTime);
-        transform.position = new Vector3(newX, fixedY, fixedZ);
+        if (GameManager.Instance != null && GameManager.Instance.IsPlaying)
+        {
+            // Mario rule: only scroll right during gameplay
+            if (desiredX > minX) minX = desiredX;
+            float newX = Mathf.Lerp(transform.position.x, minX, smoothSpeed * Time.deltaTime);
+            transform.position = new Vector3(newX, fixedY, fixedZ);
+        }
+        else
+        {
+            // Always follow player freely before game starts
+            float newX = Mathf.Lerp(transform.position.x, desiredX, smoothSpeed * Time.deltaTime);
+            transform.position = new Vector3(newX, fixedY, fixedZ);
+        }
     }
 }
