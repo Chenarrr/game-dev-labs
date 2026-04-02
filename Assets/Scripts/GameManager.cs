@@ -53,6 +53,18 @@ public class GameManager : MonoBehaviour
         if (Camera.main != null && Camera.main.GetComponent<CameraShake>() == null)
             Camera.main.gameObject.AddComponent<CameraShake>();
 
+        // Force ground platform to brown so it's always visible over the green background
+        var ground = GameObject.FindGameObjectWithTag("Ground");
+        if (ground != null)
+        {
+            var sr = ground.GetComponent<SpriteRenderer>();
+            if (sr != null)
+            {
+                sr.color        = new Color(0.45f, 0.27f, 0.13f);
+                sr.sortingOrder = 2;
+            }
+        }
+
         // Bootstrap cloud spawner
         if (FindFirstObjectByType<CloudSpawner>() == null)
         {
