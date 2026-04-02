@@ -19,6 +19,16 @@ public class CameraFollow : MonoBehaviour
         minX     = transform.position.x;
     }
 
+    void Start()
+    {
+        // Always find and follow the player automatically
+        if (target == null)
+        {
+            var player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null) SetTarget(player.transform);
+        }
+    }
+
     public void SetTarget(Transform t)
     {
         target = t;

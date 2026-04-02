@@ -37,6 +37,14 @@ public class PlayerController : MonoBehaviour
         anim        = GetComponent<Animator>();
         baseScale   = transform.localScale;
         targetScale = baseScale;
+
+        // Load sprite at runtime so it always shows regardless of scene setup
+        var sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            var sprite = Resources.Load<Sprite>("ball_idle");
+            if (sprite != null) { sr.sprite = sprite; sr.color = Color.white; }
+        }
     }
 
     void Update()
