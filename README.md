@@ -1,6 +1,6 @@
 # Lab2 — 2D Platformer (Unity 6)
 
-A simple 2D platformer built with Unity 6 and the Universal Render Pipeline (URP 2D).
+A Mario-style 2D platformer built with Unity 6 and URP 2D, featuring a custom cute red ball character made in Blender.
 
 ---
 
@@ -8,19 +8,32 @@ A simple 2D platformer built with Unity 6 and the Universal Render Pipeline (URP
 
 | Key | Action |
 |-----|--------|
-| `A` | Move left |
-| `D` | Move right |
-| `Enter` | Jump (only when grounded) |
-| `R` | Restart after game over |
+| `A` / `←` | Move left |
+| `D` / `→` | Move right |
+| `Space` / `↑` | Jump |
+| `Space` / `Enter` | Start game from intro screen |
+| `R` / `Enter` | Restart after game over |
+
+> Press **SPACE** on the intro screen first before moving.
 
 ---
 
 ## Gameplay
 
-- Survive as long as possible by avoiding dark grey obstacle squares coming from the right
-- Your score increases by 1 every second you stay alive
-- One hit from an obstacle ends the game
-- The final score is shown on the Game Over screen
+- Run as far as you can on procedurally generated platforms
+- Avoid obstacles and enemies
+- Stomp enemies for **+3 points**
+- Score increases the further you run
+- Fall into a gap or get hit = game over
+
+---
+
+## Character
+
+Custom cute red ball made in **Blender** via Blender MCP:
+- 15 hand-rendered animation frames: idle, blink, run (x6), jump anticipation, up, peak, fall, land
+- Transparent PNG sprites with squash & stretch feel
+- Animated in Unity via Animator Controller
 
 ---
 
@@ -30,36 +43,38 @@ A simple 2D platformer built with Unity 6 and the Universal Render Pipeline (URP
 
 | Script | Description |
 |--------|-------------|
-| `PlayerController.cs` | Handles player movement (A/D), jumping (Enter), and ground detection. Notifies GameManager on death |
-| `Obstacle.cs` | Moves a square left at constant speed. Destroys itself when off-screen |
-| `ObstacleSpawner.cs` | Spawns a new dark grey obstacle every 2 seconds from the right side of the screen |
-| `GameManager.cs` | Singleton that tracks score, handles game over state, destroys active obstacles on death, and listens for R to restart |
+| `PlayerController.cs` | Movement, jumping, coyote time, squash & stretch, animator drive |
+| `CameraFollow.cs` | Smooth follow — scrolls right only during gameplay (Mario-style) |
+| `CameraShake.cs` | Screen shake on death |
+| `GameManager.cs` | Game states: Intro → Playing → GameOver, score tracking |
+| `WorldGenerator.cs` | Procedural platform and enemy generation |
+| `ParallaxBackground.cs` | Scrolling background layers |
+| `CloudSpawner.cs` | Decorative cloud spawner |
+| `Enemy.cs` | Enemy behaviour |
+| `Obstacle.cs` | Moving obstacle logic |
 
-### Editor Scripts (`Assets/Editor/`)
+### Sprites (`Assets/Sprites/`)
 
-| Script | Description |
-|--------|-------------|
-| `SceneSetup.cs` | Unity editor menu item (`Lab2 → Fix Scene`) that builds the entire scene from scratch — ground, player, spawner, UI, camera |
-
-### Scene (`Assets/Scenes/SampleScene.unity`)
-
-| Object | Details |
-|--------|---------|
-| **Main Camera** | Sky blue background, orthographic size 5 |
-| **Ground** | Green square sprite, width 22, `BoxCollider2D`, tagged `Ground` |
-| **Player** | Red square sprite, `Rigidbody2D` (freeze Z rotation), `BoxCollider2D`, `PlayerController` |
-| **ObstacleSpawner** | Empty GameObject that spawns obstacles at runtime |
-| **GameManager** | Empty GameObject running game state logic |
-| **GameUI** | Canvas with score text (top left) and Game Over overlay panel |
+| File | Description |
+|------|-------------|
+| `ball_idle.png` | Idle frame |
+| `ball_blink1-3.png` | Blink animation |
+| `ball_run1-6.png` | Run cycle |
+| `ball_jump_anticipation.png` | Crouch before jump |
+| `ball_jump_up.png` | Rising |
+| `ball_jump_peak.png` | Peak |
+| `ball_jump_fall.png` | Falling |
+| `ball_jump_land.png` | Landing squash |
+| `Animations/BallAnimator.controller` | Animator wiring all states |
 
 ---
 
-## Setup (first time)
+## Setup
 
-1. Open the project in Unity 6
-2. Wait for scripts to compile
-3. Click **`Lab2 → Fix Scene`** in the top menu bar
-4. Hit **Play**
+1. Open in **Unity 6**
+2. Wait for compile
+3. Press **Play**
+4. Press **SPACE** to start
 
 ---
 
@@ -68,4 +83,5 @@ A simple 2D platformer built with Unity 6 and the Universal Render Pipeline (URP
 - Unity 6 (6000.3.9f1)
 - Universal Render Pipeline (URP 2D)
 - New Input System (`UnityEngine.InputSystem`)
-- TextMeshPro for UI text
+- TextMeshPro
+- Blender 5.1 (character art via Blender MCP)
