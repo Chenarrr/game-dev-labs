@@ -4,38 +4,50 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private float maxSpeed     = 6f;
+    [SerializeField] private float maxSpeed     = 7f;
     [SerializeField] private float acceleration = 50f;
     [SerializeField] private float deceleration = 40f;
 
     [Header("Jump")]
-    [SerializeField] private float jumpForce         = 12f;
-    [SerializeField] private float jumpCutMultiplier  = 0.4f;
-    [SerializeField] private float fallMultiplier     = 2.5f;
-    [SerializeField] private float coyoteTime         = 0.1f;
+    [SerializeField] private float jumpForce        = 12f;
+    [SerializeField] private float jumpCutMultiplier = 0.4f;
+    [SerializeField] private float fallMultiplier    = 2.5f;
+    [SerializeField] private float coyoteTime        = 0.12f;
+
+    [Header("Death")]
+    [SerializeField] private float fallDeathY = -8f;
 
     private Rigidbody2D rb;
-    private bool  isDead         = false;
     private int   groundContacts = 0;
     private float coyoteCounter  = 0f;
-    private bool  IsGrounded     => groundContacts > 0;
+    private bool  wasGrounded    = false;
 
     // Squash & stretch
     private Vector3 baseScale;
     private Vector3 targetScale;
-    private bool    wasGrounded = false;
+
+    public bool IsDead { get; private set; } = false;
+
+    private bool IsGrounded => groundContacts > 0;
 
     void Awake()
     {
-        rb        = GetComponent<Rigidbody2D>();
-        baseScale = transform.localScale;
+        rb          = GetComponent<Rigidbody2D>();
+        baseScale   = transform.localScale;
         targetScale = baseScale;
     }
 
     void Update()
     {
-        if (isDead) return;
+        if (IsDead) return;
         if (GameManager.Instance == null || !GameManager.Instance.IsPlaying) return;
+
+        // ── Fall into gap ────────────────────────────────────────────────────
+        if (transform.position.y < fallDeathY)
+        {
+            TakeDamage();
+            return;
+        }
 
         var kb = Keyboard.current;
         if (kb == null) return;
@@ -51,6 +63,20 @@ public class PlayerController : MonoBehaviour
             Mathf.MoveTowards(rb.linearVelocity.x, targetVX, rate * Time.deltaTime),
             rb.linearVelocity.y);
 
+        // Prevent scrolling back past camera left edge
+        if (Camera.main != null)
+        {
+            float camLeft = Camera.main.transform.position.x
+                          - Camera.main.orthographicSize * Camera.main.aspect;
+            float minX = camLeft + transform.lossyScale.x * 0.5f + 0.1f;
+            if (transform.position.x < minX)
+            {
+                transform.position = new Vector3(minX, transform.position.y, 0f);
+                if (rb.linearVelocity.x < 0f)
+                    rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+            }
+        }
+
         // ── Coyote time ──────────────────────────────────────────────────────
         if (IsGrounded) coyoteCounter = coyoteTime;
         else            coyoteCounter -= Time.deltaTime;
@@ -63,7 +89,7 @@ public class PlayerController : MonoBehaviour
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
             coyoteCounter = 0f;
-            targetScale = new Vector3(baseScale.x * 0.7f, baseScale.y * 1.4f, baseScale.z); // stretch up
+            targetScale   = new Vector3(baseScale.x * 0.7f, baseScale.y * 1.4f, baseScale.z);
         }
 
         if (jumpReleased && rb.linearVelocity.y > 0f)
@@ -74,16 +100,12 @@ public class PlayerController : MonoBehaviour
             rb.linearVelocity += Vector2.up * Physics2D.gravity.y * (fallMultiplier - 1f) * Time.deltaTime;
 
         // ── Squash on landing ────────────────────────────────────────────────
-        bool justLanded = IsGrounded && !wasGrounded;
-        if (justLanded)
-            targetScale = new Vector3(baseScale.x * 1.4f, baseScale.y * 0.6f, baseScale.z); // squash
-
+        if (IsGrounded && !wasGrounded)
+            targetScale = new Vector3(baseScale.x * 1.4f, baseScale.y * 0.6f, baseScale.z);
         wasGrounded = IsGrounded;
 
-        // Smooth scale back to normal
         transform.localScale = Vector3.Lerp(transform.localScale, targetScale, Time.deltaTime * 18f);
-        if (IsGrounded && targetScale != baseScale &&
-            Vector3.Distance(transform.localScale, targetScale) < 0.01f)
+        if (IsGrounded && Vector3.Distance(transform.localScale, targetScale) < 0.01f)
             targetScale = baseScale;
     }
 
@@ -99,18 +121,12 @@ public class PlayerController : MonoBehaviour
             groundContacts = Mathf.Max(0, groundContacts - 1);
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    public void TakeDamage()
     {
-        if (other.CompareTag("Obstacle")) Die();
-    }
-
-    void Die()
-    {
-        if (isDead) return;
-        isDead = true;
-        rb.linearVelocity = Vector2.zero;
-        rb.bodyType = RigidbodyType2D.Kinematic;
-        // Death squash
+        if (IsDead) return;
+        IsDead = true;
+        rb.linearVelocity = new Vector2(0f, 6f);  // small death hop
+        rb.bodyType       = RigidbodyType2D.Kinematic;
         transform.localScale = new Vector3(baseScale.x * 1.5f, baseScale.y * 0.4f, baseScale.z);
         if (GameManager.Instance != null)
             GameManager.Instance.GameOver();

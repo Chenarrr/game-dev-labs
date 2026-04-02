@@ -18,20 +18,24 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private TextMeshProUGUI finalScoreText;
 
-    private int   score    = 0;
+    private int   score     = 0;
     private int   bestScore;
+    private float startX;
+    private float lastScoreX;
+    private Transform playerTransform;
 
-    private GameObject     introOverlay;
+    private GameObject      introOverlay;
     private TextMeshProUGUI introText;
 
-    // score pop animation
-    private float  scorePop      = 0f;
+    private float  scorePop       = 0f;
     private Vector3 scoreBaseScale;
+
+    private const float UnitsPerPoint = 4f;  // 1 point every 4 units run
 
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this;
+        Instance  = this;
         bestScore = PlayerPrefs.GetInt("BestScore", 0);
     }
 
@@ -49,27 +53,37 @@ public class GameManager : MonoBehaviour
         if (gameOverPanel != null)
             gameOverPanel.SetActive(false);
 
-        // Attach CameraShake to the main camera if not already present
+        // Bootstrap systems
         if (Camera.main != null && Camera.main.GetComponent<CameraShake>() == null)
             Camera.main.gameObject.AddComponent<CameraShake>();
 
-        // Force ground platform to brown so it's always visible over the green background
+        if (Camera.main != null && Camera.main.GetComponent<CameraFollow>() == null)
+            Camera.main.gameObject.AddComponent<CameraFollow>();
+
+        if (FindFirstObjectByType<CloudSpawner>() == null)
+            new GameObject("CloudSpawner").AddComponent<CloudSpawner>();
+
+        if (FindFirstObjectByType<WorldGenerator>() == null)
+            new GameObject("WorldGenerator").AddComponent<WorldGenerator>();
+
+        // Disable old obstacle spawner
+        var obs = FindFirstObjectByType<ObstacleSpawner>();
+        if (obs != null) obs.enabled = false;
+
+        // Fix Ground color at runtime
         var ground = GameObject.FindGameObjectWithTag("Ground");
         if (ground != null)
         {
             var sr = ground.GetComponent<SpriteRenderer>();
-            if (sr != null)
-            {
-                sr.color        = new Color(0.45f, 0.27f, 0.13f);
-                sr.sortingOrder = 2;
-            }
+            if (sr != null) { sr.color = new Color(0.45f, 0.27f, 0.13f); sr.sortingOrder = 2; }
         }
 
-        // Bootstrap cloud spawner
-        if (FindFirstObjectByType<CloudSpawner>() == null)
+        // Link camera to player
+        var player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
         {
-            var go = new GameObject("CloudSpawner");
-            go.AddComponent<CloudSpawner>();
+            playerTransform = player.transform;
+            CameraFollow.Instance?.SetTarget(playerTransform);
         }
 
         CreateIntroOverlay();
@@ -87,17 +101,32 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        if (State == GameState.Playing)
+        {
+            // Distance-based score
+            if (playerTransform != null)
+            {
+                float travelX = playerTransform.position.x - lastScoreX;
+                if (travelX >= UnitsPerPoint)
+                {
+                    int pts = Mathf.FloorToInt(travelX / UnitsPerPoint);
+                    lastScoreX += pts * UnitsPerPoint;
+                    AddPoints(pts);
+                }
+            }
+        }
+
         if (State == GameState.GameOver)
         {
             if (kb.rKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame)
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
 
-        // Score pop-down animation
+        // Score pop animation
         if (scorePop > 0f && scoreText != null)
         {
             scorePop = Mathf.MoveTowards(scorePop, 0f, Time.deltaTime * 8f);
-            scoreText.transform.localScale = scoreBaseScale * (1f + scorePop * 0.3f);
+            scoreText.transform.localScale = scoreBaseScale * (1f + scorePop * 0.25f);
         }
     }
 
@@ -106,32 +135,47 @@ public class GameManager : MonoBehaviour
         State = GameState.Playing;
         score = 0;
 
+        if (playerTransform != null)
+        {
+            startX     = playerTransform.position.x;
+            lastScoreX = startX;
+        }
+
         if (introOverlay != null)
             introOverlay.SetActive(false);
 
         if (scoreText != null)
         {
             scoreText.gameObject.SetActive(true);
-            scoreText.text = "Score: 0";
+            scoreText.text  = "Score: 0";
             scoreText.color = Color.white;
         }
     }
 
-    public void AddScore()
+    void AddPoints(int pts)
+    {
+        score += pts;
+        RefreshScoreText();
+        scorePop = 1f;
+    }
+
+    // Called when player stomps an enemy
+    public void AddStomp()
     {
         if (State != GameState.Playing) return;
-        score++;
+        score += 3;
+        RefreshScoreText();
+        scorePop = 1f;
+    }
 
-        if (scoreText != null)
-        {
-            scoreText.text = "Score: " + score;
-            // colour shifts as score climbs
-            scoreText.color = score < 10 ? Color.white
-                            : score < 20 ? new Color(1f, 0.95f, 0.4f)   // yellow
-                            : score < 35 ? new Color(1f, 0.6f, 0.2f)    // orange
-                                         : new Color(1f, 0.35f, 0.35f); // red
-            scorePop = 1f;
-        }
+    void RefreshScoreText()
+    {
+        if (scoreText == null) return;
+        scoreText.text  = "Score: " + score;
+        scoreText.color = score <  10 ? Color.white
+                        : score <  25 ? new Color(1f, 0.95f, 0.4f)
+                        : score <  50 ? new Color(1f, 0.6f,  0.2f)
+                                      : new Color(1f, 0.35f, 0.35f);
     }
 
     public void GameOver()
@@ -139,34 +183,27 @@ public class GameManager : MonoBehaviour
         if (State == GameState.GameOver) return;
         State = GameState.GameOver;
 
-        // Save best score
         if (score > bestScore)
         {
             bestScore = score;
             PlayerPrefs.SetInt("BestScore", bestScore);
         }
 
-        foreach (GameObject obs in GameObject.FindGameObjectsWithTag("Obstacle"))
-            Destroy(obs);
-
         if (finalScoreText != null)
-            finalScoreText.text = "Score: " + score + (score >= bestScore ? "  <size=28><color=#FFD700>NEW BEST!</color></size>" : "");
+            finalScoreText.text = "Score: " + score
+                + (score >= bestScore ? "  <size=28><color=#FFD700>NEW BEST!</color></size>" : "");
 
-        // Show best score in the restart hint
-        var hint = gameOverPanel != null
-            ? gameOverPanel.transform.Find("RestartHint")
-            : null;
+        var hint = gameOverPanel != null ? gameOverPanel.transform.Find("RestartHint") : null;
         if (hint != null)
         {
-            var hintTMP = hint.GetComponent<TextMeshProUGUI>();
-            if (hintTMP != null)
-                hintTMP.text = "Best: " + bestScore + "\n\n<size=28>Press <b>R</b> or <b>ENTER</b> to Restart</size>";
+            var h = hint.GetComponent<TextMeshProUGUI>();
+            if (h != null)
+                h.text = "Best: " + bestScore + "\n\n<size=28>Press <b>R</b> or <b>ENTER</b> to Restart</size>";
         }
 
         if (gameOverPanel != null)
             gameOverPanel.SetActive(true);
 
-        // Camera shake
         CameraShake.Instance?.Shake(0.4f, 0.18f);
     }
 
@@ -177,7 +214,6 @@ public class GameManager : MonoBehaviour
         finalScoreText = finalTMP;
     }
 
-    // ── Intro overlay ────────────────────────────────────────────────────────
     void CreateIntroOverlay()
     {
         Canvas canvas = FindFirstObjectByType<Canvas>();
@@ -187,7 +223,7 @@ public class GameManager : MonoBehaviour
         introOverlay.transform.SetParent(canvas.transform, false);
 
         var img = introOverlay.AddComponent<Image>();
-        img.color = new Color(0f, 0f, 0f, 0.55f);
+        img.color = new Color(0f, 0f, 0f, 0.6f);
         var rt = introOverlay.GetComponent<RectTransform>();
         rt.anchorMin = Vector2.zero;
         rt.anchorMax = Vector2.one;
@@ -198,12 +234,13 @@ public class GameManager : MonoBehaviour
         introText = textGO.AddComponent<TextMeshProUGUI>();
 
         string best = bestScore > 0 ? $"\n<size=28><color=#FFD700>Best: {bestScore}</color></size>" : "";
-        introText.text = "<b>DODGE OBSTACLES</b>" + best +
-                         "\n\n<size=32>← → or A D  to move\n↑ or SPACE to jump</size>" +
-                         "\n\n<size=36>Press <b>SPACE</b> to Start</size>";
-        introText.fontSize = 58;
+        introText.text = "<b>SUPER RUNNER</b>" + best
+            + "\n\n<size=32>← → or A D  to run\n↑ or SPACE to jump\n\nStomp enemies for +3 pts!</size>"
+            + "\n\n<size=36>Press <b>SPACE</b> to Start</size>";
+        introText.fontSize  = 54;
         introText.alignment = TextAlignmentOptions.Center;
-        introText.color = Color.white;
+        introText.color     = Color.white;
+
         var trt = textGO.GetComponent<RectTransform>();
         trt.anchorMin = Vector2.zero;
         trt.anchorMax = Vector2.one;

@@ -31,7 +31,7 @@ public class Obstacle : MonoBehaviour
             {
                 scored = true;
                 if (GameManager.Instance != null && !GameManager.Instance.isGameOver)
-                    GameManager.Instance.AddScore();
+                    GameManager.Instance.AddStomp(); // re-uses +3 point reward
             }
         }
 
