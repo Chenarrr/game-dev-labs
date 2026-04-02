@@ -66,17 +66,27 @@ public class GameManager : MonoBehaviour
         if (FindFirstObjectByType<WorldGenerator>() == null)
             new GameObject("WorldGenerator").AddComponent<WorldGenerator>();
 
+        if (FindFirstObjectByType<ParallaxBackground>() == null)
+            new GameObject("ParallaxBackground").AddComponent<ParallaxBackground>();
+
         // Disable old obstacle spawner
         var obs = FindFirstObjectByType<ObstacleSpawner>();
         if (obs != null) obs.enabled = false;
 
-        // Fix Ground: shrink it to a short starting platform and set color
+        // Disable the limited green background sprite — parallax + sky color fills the bg
+        var bgObj = GameObject.Find("ground");
+        if (bgObj != null)
+        {
+            var bgSr = bgObj.GetComponent<SpriteRenderer>();
+            if (bgSr != null) bgSr.enabled = false;
+        }
+
+        // Fix starting Ground: shrink to 8 units wide, set brown
         var ground = GameObject.FindGameObjectWithTag("Ground");
         if (ground != null)
         {
             var sr = ground.GetComponent<SpriteRenderer>();
             if (sr != null) { sr.color = new Color(0.45f, 0.27f, 0.13f); sr.sortingOrder = 2; }
-            // Shrink from 22 units wide down to 8 so gaps appear quickly
             ground.transform.localScale = new Vector3(8f, ground.transform.localScale.y, 1f);
             ground.transform.position   = new Vector3(0f, ground.transform.position.y, 0f);
         }

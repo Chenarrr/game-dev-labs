@@ -4,27 +4,41 @@ public class CameraFollow : MonoBehaviour
 {
     public static CameraFollow Instance { get; private set; }
 
-    private Transform target;
-    private Vector3   origin;
+    [SerializeField] private float smoothSpeed = 8f;
 
-    [SerializeField] private float smoothSpeed = 6f;
-    [SerializeField] private float aheadOffset = 3f;   // look a bit ahead of the player
+    private Transform target;
+    private float     fixedY;
+    private float     fixedZ;
+    private float     minX;       // camera never scrolls left of this
 
     void Awake()
     {
         Instance = this;
-        origin   = transform.position;
+        fixedY   = transform.position.y;
+        fixedZ   = transform.position.z;
+        minX     = transform.position.x;
     }
 
-    public void SetTarget(Transform t) => target = t;
+    public void SetTarget(Transform t)
+    {
+        target = t;
+        // Snap camera directly onto player immediately so there's no lag at start
+        float startX = t.position.x;
+        transform.position = new Vector3(startX, fixedY, fixedZ);
+        minX = startX;
+    }
 
     void LateUpdate()
     {
         if (target == null) return;
         if (GameManager.Instance == null || !GameManager.Instance.IsPlaying) return;
 
-        float desiredX  = Mathf.Max(origin.x, target.position.x + aheadOffset);
-        Vector3 desired = new Vector3(desiredX, origin.y, origin.z);
-        transform.position = Vector3.Lerp(transform.position, desired, smoothSpeed * Time.deltaTime);
+        float desiredX = target.position.x;
+
+        // Classic Mario rule: camera only scrolls RIGHT, never back left
+        if (desiredX > minX) minX = desiredX;
+
+        float newX = Mathf.Lerp(transform.position.x, minX, smoothSpeed * Time.deltaTime);
+        transform.position = new Vector3(newX, fixedY, fixedZ);
     }
 }

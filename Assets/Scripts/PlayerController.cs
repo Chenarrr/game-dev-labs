@@ -4,20 +4,21 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private float maxSpeed     = 7f;
-    [SerializeField] private float acceleration = 50f;
-    [SerializeField] private float deceleration = 40f;
+    [SerializeField] private float maxSpeed     = 8f;
+    [SerializeField] private float acceleration = 60f;
+    [SerializeField] private float deceleration = 50f;
 
     [Header("Jump")]
-    [SerializeField] private float jumpForce        = 12f;
-    [SerializeField] private float jumpCutMultiplier = 0.4f;
-    [SerializeField] private float fallMultiplier    = 2.5f;
-    [SerializeField] private float coyoteTime        = 0.12f;
+    [SerializeField] private float jumpForce        = 13f;
+    [SerializeField] private float jumpCutMultiplier = 0.35f;
+    [SerializeField] private float fallMultiplier    = 2.8f;
+    [SerializeField] private float coyoteTime        = 0.14f;
 
     [Header("Death")]
     [SerializeField] private float fallDeathY = -8f;
 
     private Rigidbody2D rb;
+    private Animator    anim;
     private int   groundContacts = 0;
     private float coyoteCounter  = 0f;
     private bool  wasGrounded    = false;
@@ -33,6 +34,7 @@ public class PlayerController : MonoBehaviour
     void Awake()
     {
         rb          = GetComponent<Rigidbody2D>();
+        anim        = GetComponent<Animator>();
         baseScale   = transform.localScale;
         targetScale = baseScale;
     }
@@ -107,6 +109,18 @@ public class PlayerController : MonoBehaviour
         transform.localScale = Vector3.Lerp(transform.localScale, targetScale, Time.deltaTime * 18f);
         if (IsGrounded && Vector3.Distance(transform.localScale, targetScale) < 0.01f)
             targetScale = baseScale;
+
+        // ── Animator ─────────────────────────────────────────────────────────
+        if (anim != null)
+        {
+            anim.SetFloat("Speed",      Mathf.Abs(rb.linearVelocity.x));
+            anim.SetBool ("IsGrounded", IsGrounded);
+            anim.SetFloat("VelocityY",  rb.linearVelocity.y);
+        }
+
+        // Flip sprite when moving left
+        if (input < -0.01f)      transform.localScale = new Vector3(-Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+        else if (input > 0.01f)  transform.localScale = new Vector3( Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
     }
 
     void OnCollisionEnter2D(Collision2D col)
