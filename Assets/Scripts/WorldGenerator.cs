@@ -91,6 +91,16 @@ public class WorldGenerator : MonoBehaviour
 
         g.AddComponent<BoxCollider2D>();
 
+        // Grass strip on top
+        var grass = new GameObject("Grass");
+        grass.transform.SetParent(g.transform, false);
+        grass.transform.localPosition = new Vector3(0f, 0.5f, 0f);
+        grass.transform.localScale    = new Vector3(1f, 0.18f, 1f);
+        var gsr = grass.AddComponent<SpriteRenderer>();
+        gsr.sprite       = WhiteSquare();
+        gsr.color        = new Color(0.27f, 0.75f, 0.25f);
+        gsr.sortingOrder = sortOrder + 1;
+
         tiles.Add(g);
     }
 

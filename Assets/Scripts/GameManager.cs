@@ -236,7 +236,7 @@ public class GameManager : MonoBehaviour
         introOverlay.transform.SetParent(canvas.transform, false);
 
         var img = introOverlay.AddComponent<Image>();
-        img.color = new Color(0f, 0f, 0f, 0.6f);
+        img.color = new Color(0f, 0f, 0f, 0.45f);
         var rt = introOverlay.GetComponent<RectTransform>();
         rt.anchorMin = Vector2.zero;
         rt.anchorMax = Vector2.one;
