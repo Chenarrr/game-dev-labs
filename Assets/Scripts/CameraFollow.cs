@@ -4,16 +4,19 @@ public class CameraFollow : MonoBehaviour
 {
     public static CameraFollow Instance { get; private set; }
 
-    [SerializeField] private float smoothTime    = 0.15f;
-    [SerializeField] private float lookAheadDist = 1.5f;
+    [SerializeField] private float smoothTime    = 0.12f;
+    [SerializeField] private float lookAheadDist = 2f;
+    [SerializeField] private float yOffset       = 1.5f;
 
     private Transform   target;
     private Rigidbody2D targetRb;
     private float       fixedZ = -10f;
-    private float       minX;
     private float       currentLookAhead;
     private Vector3     velocity;
     private bool        ready;
+
+    // Shake offset — set by CameraShake
+    [HideInInspector] public Vector3 shakeOffset;
 
     void Awake()
     {
@@ -23,7 +26,6 @@ public class CameraFollow : MonoBehaviour
 
     void Start()
     {
-        // Set sky blue background — works with URP 2D
         var cam = GetComponent<Camera>();
         if (cam != null)
         {
@@ -44,10 +46,7 @@ public class CameraFollow : MonoBehaviour
     {
         target   = t;
         targetRb = t.GetComponent<Rigidbody2D>();
-
-        // Snap camera to player immediately — use player Y so nothing is off screen
-        transform.position = new Vector3(t.position.x, t.position.y + 1.5f, fixedZ);
-        minX  = t.position.x;
+        transform.position = new Vector3(t.position.x, t.position.y + yOffset, fixedZ);
         ready = true;
     }
 
@@ -56,24 +55,16 @@ public class CameraFollow : MonoBehaviour
         if (!ready) { AutoFind(); return; }
         if (target == null) { AutoFind(); return; }
 
-        bool playing = GameManager.Instance != null && GameManager.Instance.IsPlaying;
-
-        // Smooth look-ahead
+        // Smooth look-ahead based on horizontal velocity
         float velX = targetRb != null ? targetRb.linearVelocity.x : 0f;
-        float targetLook = Mathf.Sign(velX) * lookAheadDist * Mathf.Clamp01(Mathf.Abs(velX) / 6f);
-        currentLookAhead = Mathf.Lerp(currentLookAhead, targetLook, 4f * Time.deltaTime);
+        float targetLook = Mathf.Sign(velX) * lookAheadDist * Mathf.Clamp01(Mathf.Abs(velX) / 5f);
+        currentLookAhead = Mathf.Lerp(currentLookAhead, targetLook, 6f * Time.deltaTime);
 
         float desiredX = target.position.x + currentLookAhead;
-        float desiredY = target.position.y + 1.5f;  // keep player slightly below center
-
-        if (playing)
-        {
-            if (desiredX > minX) minX = desiredX;
-            desiredX = minX;
-        }
+        float desiredY = target.position.y + yOffset;
 
         Vector3 desired = new Vector3(desiredX, desiredY, fixedZ);
         transform.position = Vector3.SmoothDamp(
-            transform.position, desired, ref velocity, smoothTime);
+            transform.position, desired, ref velocity, smoothTime) + shakeOffset;
     }
 }

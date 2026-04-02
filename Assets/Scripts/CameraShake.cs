@@ -4,15 +4,10 @@ public class CameraShake : MonoBehaviour
 {
     public static CameraShake Instance { get; private set; }
 
-    private Vector3 originPos;
-    private float   shakeDuration;
-    private float   shakeMagnitude;
+    private float shakeDuration;
+    private float shakeMagnitude;
 
-    void Awake()
-    {
-        Instance  = this;
-        originPos = transform.localPosition;
-    }
+    void Awake() => Instance = this;
 
     public void Shake(float duration, float magnitude)
     {
@@ -22,14 +17,16 @@ public class CameraShake : MonoBehaviour
 
     void Update()
     {
+        if (CameraFollow.Instance == null) return;
+
         if (shakeDuration > 0f)
         {
-            transform.localPosition = originPos + (Vector3)Random.insideUnitCircle * shakeMagnitude;
+            CameraFollow.Instance.shakeOffset = (Vector3)Random.insideUnitCircle * shakeMagnitude;
             shakeDuration -= Time.deltaTime;
         }
         else
         {
-            transform.localPosition = originPos;
+            CameraFollow.Instance.shakeOffset = Vector3.zero;
         }
     }
 }

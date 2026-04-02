@@ -15,22 +15,18 @@ public class GameManager : MonoBehaviour
     public bool isGameOver => State == GameState.GameOver;
 
     [SerializeField] private GameObject      gameOverPanel;
-    [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private TextMeshProUGUI finalScoreText;
 
-    private int   score     = 0;
     private int   bestScore;
     private float startX;
     private float lastScoreX;
+    private int   score;
     private Transform playerTransform;
 
     private GameObject      introOverlay;
     private TextMeshProUGUI introText;
 
-    private float  scorePop       = 0f;
-    private Vector3 scoreBaseScale;
-
-    private const float UnitsPerPoint = 4f;  // 1 point every 4 units run
+    private const float UnitsPerPoint = 4f;
 
     void Awake()
     {
@@ -42,13 +38,6 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         State = GameState.Intro;
-
-        if (scoreText != null)
-        {
-            scoreBaseScale = scoreText.transform.localScale;
-            scoreText.text = "Score: 0";
-            scoreText.gameObject.SetActive(false);
-        }
 
         if (gameOverPanel != null)
             gameOverPanel.SetActive(false);
@@ -73,7 +62,7 @@ public class GameManager : MonoBehaviour
         var obs = FindFirstObjectByType<ObstacleSpawner>();
         if (obs != null) obs.enabled = false;
 
-        // Disable the limited green background sprite — parallax + sky color fills the bg
+        // Disable the limited green background sprite
         var bgObj = GameObject.Find("ground");
         if (bgObj != null)
         {
@@ -116,7 +105,7 @@ public class GameManager : MonoBehaviour
 
         if (State == GameState.Playing)
         {
-            // Distance-based score
+            // Track score internally for best-score
             if (playerTransform != null)
             {
                 float travelX = playerTransform.position.x - lastScoreX;
@@ -124,7 +113,7 @@ public class GameManager : MonoBehaviour
                 {
                     int pts = Mathf.FloorToInt(travelX / UnitsPerPoint);
                     lastScoreX += pts * UnitsPerPoint;
-                    AddPoints(pts);
+                    score += pts;
                 }
             }
         }
@@ -133,13 +122,6 @@ public class GameManager : MonoBehaviour
         {
             if (kb.rKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame)
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-        }
-
-        // Score pop animation
-        if (scorePop > 0f && scoreText != null)
-        {
-            scorePop = Mathf.MoveTowards(scorePop, 0f, Time.deltaTime * 8f);
-            scoreText.transform.localScale = scoreBaseScale * (1f + scorePop * 0.25f);
         }
     }
 
@@ -156,39 +138,12 @@ public class GameManager : MonoBehaviour
 
         if (introOverlay != null)
             introOverlay.SetActive(false);
-
-        if (scoreText != null)
-        {
-            scoreText.gameObject.SetActive(true);
-            scoreText.text  = "Score: 0";
-            scoreText.color = Color.white;
-        }
     }
 
-    void AddPoints(int pts)
-    {
-        score += pts;
-        RefreshScoreText();
-        scorePop = 1f;
-    }
-
-    // Called when player stomps an enemy
     public void AddStomp()
     {
         if (State != GameState.Playing) return;
         score += 3;
-        RefreshScoreText();
-        scorePop = 1f;
-    }
-
-    void RefreshScoreText()
-    {
-        if (scoreText == null) return;
-        scoreText.text  = "Score: " + score;
-        scoreText.color = score <  10 ? Color.white
-                        : score <  25 ? new Color(1f, 0.95f, 0.4f)
-                        : score <  50 ? new Color(1f, 0.6f,  0.2f)
-                                      : new Color(1f, 0.35f, 0.35f);
     }
 
     public void GameOver()
@@ -203,8 +158,8 @@ public class GameManager : MonoBehaviour
         }
 
         if (finalScoreText != null)
-            finalScoreText.text = "Score: " + score
-                + (score >= bestScore ? "  <size=28><color=#FFD700>NEW BEST!</color></size>" : "");
+            finalScoreText.text = "Distance: " + score
+                + (score >= bestScore && score > 0 ? "  <size=28><color=#FFD700>NEW BEST!</color></size>" : "");
 
         var hint = gameOverPanel != null ? gameOverPanel.transform.Find("RestartHint") : null;
         if (hint != null)
@@ -223,7 +178,6 @@ public class GameManager : MonoBehaviour
     public void SetUIReferences(GameObject panel, TextMeshProUGUI scoreTMP, TextMeshProUGUI finalTMP)
     {
         gameOverPanel  = panel;
-        scoreText      = scoreTMP;
         finalScoreText = finalTMP;
     }
 
@@ -248,7 +202,7 @@ public class GameManager : MonoBehaviour
 
         string best = bestScore > 0 ? $"\n<size=28><color=#FFD700>Best: {bestScore}</color></size>" : "";
         introText.text = "<b>SUPER RUNNER</b>" + best
-            + "\n\n<size=32>← → or A D  to run\n↑ or SPACE to jump\n\nStomp enemies for +3 pts!</size>"
+            + "\n\n<size=32>\u2190 \u2192 or A D  to run\n\u2191 or SPACE to jump\n\nStomp enemies!</size>"
             + "\n\n<size=36>Press <b>SPACE</b> to Start</size>";
         introText.fontSize  = 54;
         introText.alignment = TextAlignmentOptions.Center;
