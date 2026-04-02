@@ -10,8 +10,8 @@ public class PlayerController : MonoBehaviour
 
     [Header("Jump")]
     [SerializeField] private float jumpForce         = 12f;
-    [SerializeField] private float jumpCutMultiplier  = 0.4f;  // tap = short hop, hold = full jump
-    [SerializeField] private float fallMultiplier     = 2.5f;  // fall faster than rise
+    [SerializeField] private float jumpCutMultiplier  = 0.4f;
+    [SerializeField] private float fallMultiplier     = 2.5f;
     [SerializeField] private float coyoteTime         = 0.1f;
 
     private Rigidbody2D rb;
@@ -20,7 +20,17 @@ public class PlayerController : MonoBehaviour
     private float coyoteCounter  = 0f;
     private bool  IsGrounded     => groundContacts > 0;
 
-    void Awake() => rb = GetComponent<Rigidbody2D>();
+    // Squash & stretch
+    private Vector3 baseScale;
+    private Vector3 targetScale;
+    private bool    wasGrounded = false;
+
+    void Awake()
+    {
+        rb        = GetComponent<Rigidbody2D>();
+        baseScale = transform.localScale;
+        targetScale = baseScale;
+    }
 
     void Update()
     {
@@ -30,7 +40,7 @@ public class PlayerController : MonoBehaviour
         var kb = Keyboard.current;
         if (kb == null) return;
 
-        // ── Horizontal: A/D + arrow keys ────────────────────────────────────
+        // ── Horizontal ───────────────────────────────────────────────────────
         float input = 0f;
         if (kb.aKey.isPressed || kb.leftArrowKey.isPressed)  input = -1f;
         if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) input =  1f;
@@ -45,23 +55,36 @@ public class PlayerController : MonoBehaviour
         if (IsGrounded) coyoteCounter = coyoteTime;
         else            coyoteCounter -= Time.deltaTime;
 
-        // ── Jump: Space or Up arrow ONLY ─────────────────────────────────────
-        bool jumpPressed   = kb.spaceKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame;
-        bool jumpReleased  = kb.spaceKey.wasReleasedThisFrame || kb.upArrowKey.wasReleasedThisFrame;
+        // ── Jump ─────────────────────────────────────────────────────────────
+        bool jumpPressed  = kb.spaceKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame;
+        bool jumpReleased = kb.spaceKey.wasReleasedThisFrame || kb.upArrowKey.wasReleasedThisFrame;
 
         if (jumpPressed && coyoteCounter > 0f)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
             coyoteCounter = 0f;
+            targetScale = new Vector3(baseScale.x * 0.7f, baseScale.y * 1.4f, baseScale.z); // stretch up
         }
 
-        // Cut jump on release for variable height
         if (jumpReleased && rb.linearVelocity.y > 0f)
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * jumpCutMultiplier);
 
         // ── Fall boost ───────────────────────────────────────────────────────
         if (rb.linearVelocity.y < 0f)
             rb.linearVelocity += Vector2.up * Physics2D.gravity.y * (fallMultiplier - 1f) * Time.deltaTime;
+
+        // ── Squash on landing ────────────────────────────────────────────────
+        bool justLanded = IsGrounded && !wasGrounded;
+        if (justLanded)
+            targetScale = new Vector3(baseScale.x * 1.4f, baseScale.y * 0.6f, baseScale.z); // squash
+
+        wasGrounded = IsGrounded;
+
+        // Smooth scale back to normal
+        transform.localScale = Vector3.Lerp(transform.localScale, targetScale, Time.deltaTime * 18f);
+        if (IsGrounded && targetScale != baseScale &&
+            Vector3.Distance(transform.localScale, targetScale) < 0.01f)
+            targetScale = baseScale;
     }
 
     void OnCollisionEnter2D(Collision2D col)
@@ -87,6 +110,8 @@ public class PlayerController : MonoBehaviour
         isDead = true;
         rb.linearVelocity = Vector2.zero;
         rb.bodyType = RigidbodyType2D.Kinematic;
+        // Death squash
+        transform.localScale = new Vector3(baseScale.x * 1.5f, baseScale.y * 0.4f, baseScale.z);
         if (GameManager.Instance != null)
             GameManager.Instance.GameOver();
     }
