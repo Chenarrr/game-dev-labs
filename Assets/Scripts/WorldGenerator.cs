@@ -98,7 +98,7 @@ public class WorldGenerator : MonoBehaviour
         grass.transform.localScale    = new Vector3(1f, 0.18f, 1f);
         var gsr = grass.AddComponent<SpriteRenderer>();
         gsr.sprite       = WhiteSquare();
-        gsr.color        = new Color(0.27f, 0.75f, 0.25f);
+        gsr.color        = new Color(0.95f, 0.85f, 0.73f);
         gsr.sortingOrder = sortOrder + 1;
 
         tiles.Add(g);
@@ -148,10 +148,10 @@ public class WorldGenerator : MonoBehaviour
     // ── Helpers ──────────────────────────────────────────────────────────────
     static Color BrownColor()
     {
-        // Slight random variation to make ground look lively
-        float r = Random.Range(0.40f, 0.52f);
-        float g = Random.Range(0.23f, 0.32f);
-        float b = Random.Range(0.08f, 0.16f);
+        // Peach/sand color with slight variation
+        float r = Random.Range(0.85f, 0.93f);
+        float g = Random.Range(0.73f, 0.82f);
+        float b = Random.Range(0.60f, 0.70f);
         return new Color(r, g, b);
     }
 

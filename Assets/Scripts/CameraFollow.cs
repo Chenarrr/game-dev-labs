@@ -29,7 +29,7 @@ public class CameraFollow : MonoBehaviour
         var cam = GetComponent<Camera>();
         if (cam != null)
         {
-            cam.backgroundColor = new Color(0.53f, 0.81f, 0.98f);
+            cam.backgroundColor = new Color(0.22f, 0.27f, 0.40f);
             cam.clearFlags      = CameraClearFlags.SolidColor;
         }
 

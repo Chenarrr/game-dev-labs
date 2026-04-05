@@ -190,7 +190,7 @@ public class PlayerController : MonoBehaviour
         main.startLifetime  = 0.4f;
         main.startSpeed     = 0.8f;
         main.startSize      = 0.15f;
-        main.startColor     = new Color(0.6f, 0.5f, 0.35f, 0.5f);
+        main.startColor     = new Color(0.85f, 0.75f, 0.60f, 0.5f);
         main.simulationSpace = ParticleSystemSimulationSpace.World;
         main.maxParticles   = 30;
         main.gravityModifier = 0.3f;
@@ -206,7 +206,7 @@ public class PlayerController : MonoBehaviour
         col.enabled = true;
         var grad = new Gradient();
         grad.SetKeys(
-            new[] { new GradientColorKey(new Color(0.6f, 0.5f, 0.35f), 0f), new GradientColorKey(new Color(0.6f, 0.5f, 0.35f), 1f) },
+            new[] { new GradientColorKey(new Color(0.85f, 0.75f, 0.60f), 0f), new GradientColorKey(new Color(0.85f, 0.75f, 0.60f), 1f) },
             new[] { new GradientAlphaKey(0.5f, 0f), new GradientAlphaKey(0f, 1f) }
         );
         col.color = grad;

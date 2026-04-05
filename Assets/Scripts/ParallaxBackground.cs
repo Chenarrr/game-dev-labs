@@ -19,8 +19,8 @@ public class ParallaxBackground : MonoBehaviour
         cam      = Camera.main;
         lastCamX = cam.transform.position.x;
 
-        // Sky blue background on camera
-        cam.backgroundColor = new Color(0.53f, 0.81f, 0.98f);
+        // Dark navy background
+        cam.backgroundColor = new Color(0.22f, 0.27f, 0.40f);
         cam.clearFlags      = CameraClearFlags.SolidColor;
 
         float halfW = cam.orthographicSize * cam.aspect;
@@ -28,12 +28,12 @@ public class ParallaxBackground : MonoBehaviour
 
         layers = new Layer[]
         {
-            // Far mountains — soft blue/purple
+            // Far layer — slightly lighter navy
             new Layer { speed=0.05f, tileW=tileW*2f,   y=-1.8f, height=3.5f,
-                        color=new Color(0.62f, 0.72f, 0.88f) },
-            // Mid hills — muted green
+                        color=new Color(0.28f, 0.33f, 0.48f) },
+            // Mid layer — medium navy
             new Layer { speed=0.18f, tileW=tileW*1.2f, y=-2.8f, height=2.2f,
-                        color=new Color(0.42f, 0.68f, 0.38f) },
+                        color=new Color(0.25f, 0.30f, 0.44f) },
         };
 
         foreach (var l in layers) BuildLayer(l);

@@ -30,7 +30,7 @@ public class CloudSpawner : MonoBehaviour
         float y     = Random.Range(1.5f, 3.8f);
         float scale = Random.Range(1.0f, 1.8f);
         float speed = Random.Range(0.3f, 0.7f);
-        float alpha = Random.Range(0.4f, 0.65f);
+        float alpha = Random.Range(0.15f, 0.30f);
 
         GameObject cloud = new GameObject("Cloud");
         cloud.transform.position = new Vector3(startX, y, 0.5f);
